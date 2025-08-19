@@ -1,0 +1,106 @@
+import { useState, useEffect } from 'react';
+
+export default function App() {
+  const [jobs, setJobs] = useState([]);
+  const [newJob, setNewJob] = useState({
+    company: '',
+    position: '',
+    status: '',
+    date_applied: ''
+  });
+
+  const [editingJobId, setEditingJobId] = useState(null);
+
+  useEffect(() => {
+    fetchJobs();
+  }, []);
+
+  const fetchJobs = async () => {
+    try {
+      const response = await fetch("http://127.0.0.1:5000/jobs");
+      const data = await response.json();
+      console.log("Data received from backend:", data);
+      setJobs(data);
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+    }
+  };
+
+  const handleChange = (e) => {
+    setNewJob({ ...newJob, [e.target.name]: e.target.value });
+  };
+
+  const handleAddJob = async () => {
+    if (!newJob.company || !newJob.position || !newJob.status) return;
+
+    const response = await fetch("http://127.0.0.1:5000/jobs", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newJob),
+    });
+
+    if (response.ok) {
+      setNewJob({ company: '', position: '', status: '', date_applied: '' });
+      fetchJobs();
+    }
+  };
+
+  const handleDeleteJob = async (id) => {
+    await fetch(`http://127.0.0.1:5000/jobs/${id}`, {
+      method: "DELETE",
+    });
+    fetchJobs();
+  };
+
+  const handleEditJob = (job) => {
+    setNewJob(job);
+    setEditingJobId(job.id);
+  };
+
+  const handleUpdateJob = async () => {
+    await fetch(`http://127.0.0.1:5000/jobs/${editingJobId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newJob),
+    });
+
+    setNewJob({ company: '', position: '', status: '', date_applied: '' });
+    setEditingJobId(null);
+    fetchJobs();
+  };
+
+  return (
+    <div style={{ fontFamily: 'Arial, sans-serif', maxWidth: '600px', margin: '0 auto', padding: '20px' }}>
+      <h1 style={{ textAlign: 'center' }}>💼 Job Tracker</h1>
+
+      <div style={{ marginBottom: '30px' }}>
+        <input name="company" placeholder="Company" value={newJob.company} onChange={handleChange} />
+        <input name="position" placeholder="Position" value={newJob.position} onChange={handleChange} />
+        <input name="status" placeholder="Status" value={newJob.status} onChange={handleChange} />
+        <input name="date_applied" placeholder="Date (optional)" value={newJob.date_applied} onChange={handleChange} />
+
+        {editingJobId ? (
+          <button onClick={handleUpdateJob} style={{ backgroundColor: '#3498db', color: 'white', marginLeft: '10px' }}>
+            Update
+          </button>
+        ) : (
+          <button onClick={handleAddJob} style={{ backgroundColor: '#2ecc71', color: 'white', marginLeft: '10px' }}>
+            Add Job
+          </button>
+        )}
+      </div>
+
+      <ul>
+        {jobs.map((job) => (
+          <li key={job.id} style={{ borderBottom: '1px solid #ccc', padding: '10px 0' }}>
+            <strong>{job.company}</strong> — {job.position} <em>({job.status})</em>
+            <div style={{ marginTop: '5px' }}>
+              <button onClick={() => handleEditJob(job)} style={{ marginRight: '10px' }}>Edit</button>
+              <button onClick={() => handleDeleteJob(job.id)} style={{ color: 'red' }}>Delete</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

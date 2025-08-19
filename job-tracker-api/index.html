@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Job Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        input,
+        button {
+            margin: 0.5rem 0;
+            display: block;
+            width: 100%;
+            padding: 0.5rem;
+        }
+
+        #jobs {
+            margin-top: 2rem;
+        }
+
+        .job-item {
+            border: 1px solid #ccc;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Job Tracker</h1>
+
+    <h3>Add Job</h3>
+    <input type="text" id="company" placeholder="Company">
+    <input type="text" id="position" placeholder="Position">
+    <button onclick="addJob()">Add Job</button>
+
+    <h3>All Jobs</h3>
+    <button onclick="fetchJobs()">Refresh Job List</button>
+    <div id="jobs"></div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/jobs';
+
+        async function addJob() {
+            const company = document.getElementById('company').value;
+            const position = document.getElementById('position').value;
+
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ company, position })
+            });
+
+            const data = await response.json();
+            alert(data.message || 'Job added');
+            fetchJobs();
+        }
+
+        async function fetchJobs() {
+            const res = await fetch(API_URL);
+            const jobs = await res.json();
+            const jobDiv = document.getElementById('jobs');
+            jobDiv.innerHTML = '';
+            jobs.forEach(job => {
+                jobDiv.innerHTML += `
+          <div class="job-item">
+            <b>${job.company}</b> - ${job.position}<br>
+            Status: ${job.status} | Applied: ${job.date_applied || 'N/A'}
+            <br><button onclick="deleteJob(${job.id})">Delete</button>
+          </div>
+        `;
+            });
+        }
+
+        async function deleteJob(id) {
+            await fetch(`${API_URL}/${id}`, {
+                method: 'DELETE'
+            });
+            fetchJobs();
+        }
+
+        // Load on page open
+        fetchJobs();
+    </script>
+</body>
+
+</html>
