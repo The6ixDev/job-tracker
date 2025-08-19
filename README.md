@@ -111,8 +111,4 @@ Made with ❤️ by [Hamid (The6ix Dev)](https://github.com/The6ixDev)
 
 This project is open source and free to use.
 
-````
-
----
-
 
